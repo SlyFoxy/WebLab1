@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using WebLab1.Models;
 using WebLab1.Services.Interfaces;
+using Microsoft.AspNetCore.Hosting;
+using System;
 
 namespace WebLab1.Controllers
 {
@@ -14,11 +17,13 @@ namespace WebLab1.Controllers
     {
         protected readonly IEmailSender _emailSender;
         private readonly ILogger<HomeController> _logger;
+        private readonly IWebHostEnvironment _environment;
 
-        public HomeController(ILogger<HomeController> logger, IEmailSender emailSender)
+        public HomeController(ILogger<HomeController> logger, IEmailSender emailSender, IWebHostEnvironment environment)
         {
             _logger = logger;
             _emailSender = emailSender;
+            _environment = environment;
         }
         [Route("home")]
         [Route("")]
@@ -27,10 +32,16 @@ namespace WebLab1.Controllers
         {
             return View();
         }
-        [Route("about-us")]
-        public IActionResult AboutUs()
+        [Route("upload-files")]
+        public IActionResult UploadFiles()
         {
-            return View();
+            var files = Directory.GetFiles(_environment.WebRootPath + "/Files/");
+            var list = new List<string>();
+            foreach(var file in files)
+            {
+                list.Add(Path.GetFileName(file));
+            }
+            return View(list);
         }
         [Route("feed-back")]
         public IActionResult FeedBack()
@@ -48,6 +59,27 @@ namespace WebLab1.Controllers
         {
             await _emailSender.SendEmailAsync(mailModel.To, mailModel.ToName, "Feedback message", mailModel.Body);
             return RedirectToAction("Index");
+        }
+        [HttpPost]
+        [Route("FileUpload")]
+        public async Task<IActionResult> AddFile(IFormFile file)
+        {
+            try
+            {
+                if (file != null)
+                {
+                    string fileName = Guid.NewGuid().ToString()+Path.GetExtension(file.FileName);
+                    string path = Path.Combine(_environment.WebRootPath + "/Files/", fileName);
+                    using (var fileStream = new FileStream(path, FileMode.Create))
+                    {
+                        await file.CopyToAsync(fileStream);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
+                return RedirectToAction("UploadFiles");
         }
     }
 }

@@ -1,0 +1,32 @@
+﻿@{
+    ViewData["Title"] = "UploadFiles";
+    ViewData["HeaderImage"] = "/assets/img/about-bg.jpg";
+}
+@section Header{ <div class="site-heading">
+        <h1>Upload Files</h1>
+        <span class="subheading">You can upload files here!</span>
+      </div> }
+
+<main class="mb-4">
+    <div class="container px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div>
+                    <form asp-action="AddFile" asp-controller="Home" method="post" enctype="multipart/form-data">
+                        <input type="file" name="file" /><br>
+                        <input type="submit" value="Загрузить" />
+                    </form>
+
+                    <h3>Все файлы</h3>
+                    @if(Model != null)
+                    {
+                        foreach(var f in Model)
+                    {
+                        <p><a href="/Files/@f">@f</a></p>
+                    }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
